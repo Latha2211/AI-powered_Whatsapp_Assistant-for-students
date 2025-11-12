@@ -1,5 +1,6 @@
 # 🤖 WhatsApp AI Bot - Educational Support System
-![Uploading image.png…]()
+<img width="1512" height="965" alt="image" src="https://github.com/user-attachments/assets/24244d13-9e47-4cc0-b7e8-fdf7935cd59e" />
+
 
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![LangChain](https://img.shields.io/badge/LangChain-0.1.0-green.svg)](https://langchain.com/)
