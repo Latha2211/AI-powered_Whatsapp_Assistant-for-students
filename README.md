@@ -298,7 +298,7 @@ We welcome contributions! Please follow these steps:
 
 ## 👥 Authors
 
-- **Your Name** - *Initial work* - [YourGitHub](https://github.com/Latha2211)
+- **Latha R** - *Initial work* - [YourGitHub](https://github.com/Latha2211)
 
 ---
 
