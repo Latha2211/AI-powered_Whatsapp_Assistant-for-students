@@ -296,15 +296,9 @@ We welcome contributions! Please follow these steps:
 
 ---
 
-## 📝 License
-
-This project is licensed under the MIT License - see [LICENSE](LICENSE) file.
-
----
-
 ## 👥 Authors
 
-- **Your Name** - *Initial work* - [YourGitHub](https://github.com/yourusername)
+- **Your Name** - *Initial work* - [YourGitHub](https://github.com/Latha2211)
 
 ---
 
@@ -333,4 +327,4 @@ For support, email latha.r@texila.org or open an issue.
 
 ---
 
-**Made with ❤️ for Texila American University Students**
+**Made with ❤️ University Students**
