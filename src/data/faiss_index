@@ -1,0 +1,187 @@
+"""
+Build FAISS Index Script
+Creates vector store from FAQ CSV file
+"""
+
+import sys
+import os
+import pandas as pd
+from pathlib import Path
+
+# Add parent directory to path
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from src.rag.rag_engine import get_rag_engine
+from src.utils.logger import setup_logger
+from dotenv import load_dotenv
+
+# Load environment
+load_dotenv()
+
+logger = setup_logger("build_index")
+
+
+def load_faq_csv(csv_path: str) -> pd.DataFrame:
+    """Load FAQ data from CSV"""
+    try:
+        logger.info(f"📄 Loading FAQ data from: {csv_path}")
+        
+        df = pd.read_csv(csv_path)
+        
+        # Validate required columns
+        required_cols = ['Question', 'Answer']
+        missing_cols = [col for col in required_cols if col not in df.columns]
+        
+        if missing_cols:
+            logger.error(f"❌ Missing required columns: {missing_cols}")
+            return None
+        
+        # Remove empty rows
+        df = df.dropna(subset=['Question', 'Answer'])
+        
+        # Add default columns if missing
+        if 'Category' not in df.columns:
+            df['Category'] = 'general'
+        
+        if 'Interface' not in df.columns:
+            df['Interface'] = 'general'
+        
+        logger.info(f"✅ Loaded {len(df)} FAQ entries")
+        return df
+        
+    except FileNotFoundError:
+        logger.error(f"❌ FAQ file not found: {csv_path}")
+        return None
+    except Exception as e:
+        logger.error(f"❌ Error loading FAQ CSV: {e}")
+        return None
+
+
+def build_index():
+    """Main function to build FAISS index"""
+    
+    print("=" * 60)
+    print("FAISS Index Builder")
+    print("WhatsApp AI Bot - Texila American University")
+    print("=" * 60)
+    print()
+    
+    # Get FAQ CSV path
+    faq_csv_path = os.getenv("FAQ_CSV_PATH", "data/faq_database.csv")
+    
+    if not os.path.exists(faq_csv_path):
+        logger.error(f"❌ FAQ CSV not found at: {faq_csv_path}")
+        logger.info("📝 Please create FAQ CSV with columns: Question, Answer, Category, Interface")
+        return False
+    
+    # Load FAQ data
+    faq_df = load_faq_csv(faq_csv_path)
+    
+    if faq_df is None or faq_df.empty:
+        logger.error("❌ No FAQ data to process")
+        return False
+    
+    # Display sample
+    logger.info("\n📊 Sample FAQ entries:")
+    print(faq_df.head(3).to_string(index=False))
+    print()
+    
+    # Initialize RAG engine
+    logger.info("🔧 Initializing RAG engine...")
+    rag_engine = get_rag_engine()
+    
+    # Load documents with chunking
+    logger.info("📚 Loading and chunking documents...")
+    documents = rag_engine.load_faq_data(faq_df)
+    
+    if not documents:
+        logger.error("❌ Failed to load documents")
+        return False
+    
+    logger.info(f"✅ Created {len(documents)} document chunks")
+    
+    # Create vector store
+    logger.info("🔄 Creating FAISS vector store...")
+    logger.info("⏳ This may take a few minutes for large datasets...")
+    
+    success = rag_engine.create_vector_store(documents)
+    
+    if success:
+        logger.info("✅ FAISS index created successfully!")
+        logger.info(f"📁 Index saved to: {rag_engine.faq_index_path}")
+        
+        # Test the index
+        logger.info("\n🧪 Testing index with sample query...")
+        test_query = "How do I reset my password?"
+        
+        answer, confidence, sources = rag_engine.query(test_query, salutation="Student")
+        
+        print()
+        print("Test Query:", test_query)
+        print("Answer:", answer[:200] + "..." if len(answer) > 200 else answer)
+        print("Confidence:", f"{confidence:.2f}")
+        print("Sources:", sources)
+        print()
+        
+        logger.info("✅ Index test passed!")
+        return True
+    else:
+        logger.error("❌ Failed to create FAISS index")
+        return False
+
+
+def update_index():
+    """Update existing index with new FAQ entries"""
+    
+    logger.info("🔄 Updating existing FAISS index...")
+    
+    # Load existing index
+    rag_engine = get_rag_engine()
+    
+    if not rag_engine.load_vector_store():
+        logger.error("❌ No existing index found. Use 'build' command first.")
+        return False
+    
+    # Load new FAQ data
+    faq_csv_path = os.getenv("FAQ_CSV_PATH", "data/faq_database.csv")
+    faq_df = load_faq_csv(faq_csv_path)
+    
+    if faq_df is None:
+        return False
+    
+    # Load documents
+    documents = rag_engine.load_faq_data(faq_df)
+    
+    # Add to existing index
+    success = rag_engine.add_documents(documents)
+    
+    if success:
+        logger.info("✅ Index updated successfully!")
+        return True
+    else:
+        logger.error("❌ Failed to update index")
+        return False
+
+
+if __name__ == "__main__":
+    
+    # Parse command line arguments
+    if len(sys.argv) > 1:
+        command = sys.argv[1].lower()
+        
+        if command == "build":
+            success = build_index()
+        elif command == "update":
+            success = update_index()
+        else:
+            print("Usage: python build_faiss_index.py [build|update]")
+            print()
+            print("Commands:")
+            print("  build  - Create new FAISS index from FAQ CSV")
+            print("  update - Update existing index with new entries")
+            sys.exit(1)
+    else:
+        # Default: build
+        success = build_index()
+    
+    sys.exit(0 if success else 1)
