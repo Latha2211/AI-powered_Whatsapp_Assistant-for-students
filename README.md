@@ -319,7 +319,7 @@ This project is licensed under the MIT License - see [LICENSE](LICENSE) file.
 
 ## 📧 Support
 
-For support, email support@tauedu.org or open an issue.
+For support, email latha.r@texila.org or open an issue.
 
 ---
 
